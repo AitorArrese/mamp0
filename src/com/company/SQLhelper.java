@@ -10,6 +10,7 @@ public class SQLhelper {
     private static String password = "saint123";
     private static Connection connection = null;
 
+
     String createTransactions = "CREATE TABLE IF NOT EXISTS `DataStructuresYay`.`Transactions` (\n" +
             "  `TransactionID` INT NOT NULL AUTO_INCREMENT,\n" +
             "  `BookID` INT NOT NULL,\n" +
@@ -47,28 +48,43 @@ public class SQLhelper {
             "  UNIQUE INDEX `bookName_UNIQUE` (`bookName` ASC))\n" +
             "ENGINE = InnoDB;";
 
-    public String addStudent(String firstName1, String lastName1) throws SQLException
-    {
-        connection = DriverManager.getConnection(baseURL,username,password);
-        Statement stmt = connection.createStatement();
-        String sqlCommand = "INSERT INTO Students (firstName, lastName) VALUES ('"+firstName1+"', '" + lastName1 +"');";
-        return sqlCommand;
+    public boolean logIn(String user, String pass) throws SQLException {
+        try {
+            connection = DriverManager.getConnection(baseURL,user,pass);
+        } catch (SQLException e) {
+            return false;
+        }
+        username = user;
+        password = pass;
+        return true;
     }
 
-    public String addBook(String bookName, String Genre, int taken) throws SQLException
+    public void addStudent(String firstName1, String lastName1) throws SQLException
     {
-        connection = DriverManager.getConnection(baseURL,username,password);
+        connection = DriverManager.getConnection(fullURL,username,password);
+        Statement stmt = connection.createStatement();
+        String sqlCommand = "INSERT INTO Students (firstName, lastName) VALUES ('"+firstName1+"', '" + lastName1 +"');";
+        stmt.execute(sqlCommand);
+    }
+
+    public void addBook(String bookName, String Genre, int taken) throws SQLException
+    {
+        connection = DriverManager.getConnection(fullURL,username,password);
         Statement stmt = connection.createStatement();
         String sqlCommand = "INSERT INTO BookList (bookName, Taken, Genre) VALUES ('"+bookName+"', '" + taken +"', '"+Genre+"');";
-        return sqlCommand;
+        stmt.execute(sqlCommand);
     }
 
     public void addTransaction(int bookID, int studentID, int action) throws SQLException
     {
         connection = DriverManager.getConnection(fullURL,username,password);
         Statement stmt = connection.createStatement();
+        if(getBookIDAction(bookID) == action)
+        {
+            return;
+        }
         stmt.execute("INSERT INTO Transactions (BookID, StudentID, Action) VALUES ('"+bookID+"', '" + studentID +"', '"+action+"');");
-        stmt.execute("UPDATE BookList SET Taken = '\"+action+\"' WHERE bookID = '\"+bookID+\"';");
+        stmt.execute("UPDATE BookList SET Taken = '"+ action +"' WHERE bookID = '"+bookID+"';");
     }
 
     public int getBookIDAction(int bookID) throws SQLException {
@@ -78,7 +94,7 @@ public class SQLhelper {
         ResultSet rs = stmt.executeQuery(quiry);
         while(rs.next())
         {
-            if(rs.getString("bookID").equals(bookID))
+            if(rs.getInt("bookID") == bookID)
             {
                 return rs.getInt("Taken");
             }
@@ -99,6 +115,18 @@ public class SQLhelper {
         }
         return 0;
     }
+    public void removeBook(int bookID) throws SQLException {
+        connection = DriverManager.getConnection(fullURL,username,password);
+        Statement stmt = connection.createStatement();
+        stmt.execute("DELETE FROM BookList WHERE bookID = " + bookID+ ";");
+    }
+    public void removeStudent(int studentID) throws SQLException {
+        connection = DriverManager.getConnection(fullURL,username,password);
+        Statement stmt = connection.createStatement();
+        stmt.execute("DELETE FROM Students WHERE studentID = " + studentID+ ";");
+    }
+
+
 
 
 }
